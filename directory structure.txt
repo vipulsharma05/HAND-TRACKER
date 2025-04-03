@@ -1,0 +1,29 @@
+handtracking_project/  # Root Django Project
+│── manage.py         # Django management script
+│── db.sqlite3        # SQLite Database (if using a database)
+│── requirements.txt  # Dependencies file
+│── HandtrackingModule.py  # Your Hand Tracking Module
+│── Dockerfile        # (Optional) For containerization
+│── tracking/         # Django App for Hand Tracking
+│   │── __init__.py   # Marks it as a Python package
+│   │── admin.py      # Django Admin configurations (if needed)
+│   │── apps.py       # Django App Configurations
+│   │── models.py     # Database Models (if needed)
+│   │── tests.py      # Unit Tests
+│   │── views.py      # Hand Tracking View (Main Code)
+│   │── urls.py       # URL Routing for Hand Tracking
+│   │── templates/    # HTML Frontend Templates
+│   │   ├── tracking/
+│   │       ├── index.html  # Web Page for Video Streaming
+│   │── static/       # (Optional) CSS, JS, Images
+│   │── migrations/   # Database Migrations (if using a database)
+│── handtracking_project/  # Main Django Project
+│   │── __init__.py   # Marks it as a Python package
+│   │── asgi.py       # ASGI Server Configuration
+│   │── settings.py   # Django Settings
+│   │── urls.py       # Project-wide URLs
+│   │── wsgi.py       # WSGI Server Configuration
+
+
+django-admin startproject handtracking_project .
+python manage.py startapp tracking
