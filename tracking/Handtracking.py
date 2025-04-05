@@ -1,78 +1,33 @@
 import cv2
 import mediapipe as mp
+import numpy as np
+import base64
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
-import time
+mp_hands = mp.solutions.hands
+hands = mp_hands.Hands()
 
-class handDetector():
-    def __init__(self, mode=False, maxHands= 2, detectionCon=0.5, trackCon=0.5):
-        self.mode = mode
-        self.maxHands = maxHands
-        self.detectionCon = detectionCon
-        self.trackCon = trackCon
+@csrf_exempt
+def process_frame(request):
+    if request.method == "POST":
+        try:
+            data = request.json()
+            image_data = data["image"].split(",")[1]  # Extract base64 data
+            image_bytes = base64.b64decode(image_data)
 
-        self.mpHands = mp.solutions.hands
-        self.hands = self.mpHands.Hands(static_image_mode=self.mode,
-        max_num_hands=self.maxHands,
-        min_detection_confidence=self.detectionCon,
-        min_tracking_confidence=self.trackCon)
+            # Convert to OpenCV format
+            np_arr = np.frombuffer(image_bytes, np.uint8)
+            img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
 
-        self.mpDraw = mp.solutions.drawing_utils
+            # Process with Mediapipe
+            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            results = hands.process(img_rgb)
 
-    def findHands(self, img,draw = True):
-        imgRGB = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
-        self.results = self.hands.process(imgRGB)
+            # Detect hand presence
+            hand_detected = bool(results.multi_hand_landmarks)
 
-        if self.results.multi_hand_landmarks:
-            for handLms in self.results.multi_hand_landmarks:
-                if draw :
-                    self.mpDraw.draw_landmarks(img, handLms, self.mpHands.HAND_CONNECTIONS)
-
-        return img
-
-    def findPosition(self,img, handNo=0, draw =True):
-        lmList = []
-        if self.results.multi_hand_landmarks:
-            myHand = self.results.multi_hand_landmarks[handNo]
-            for id,lm in enumerate(myHand.landmark):
-                h, w, c = img.shape
-                cx, cy = int(lm.x*w), int(lm.y*h)
-
-                # print(id, cx, cy)
-                lmList.append([id,cx,cy])
-                if id==0 and draw:
-                    cv2.circle(img, (cx, cy), 25, (255, 0, 255), cv2.FILLED)
-        return lmList
-
-def main():
-    pTime = 0
-    cTime = 0
-
-    cap = cv2.VideoCapture(0)
-    #create Detector object
-    detector = handDetector()
-
-
-    while True:
-        success, img = cap.read()
-
-        img = detector.findHands(img)
-        lmList  = detector.findPosition(img,draw =False)
-        if lmList:
-            print(lmList[0])
-
-        cTime = time.time()
-        fps = 1/(cTime-pTime)
-        pTime = cTime
-
-
-        cv2.putText(img, f'Fps : {str(int(fps))}', (10, 70), cv2.FONT_HERSHEY_PLAIN, 3,
-                    (255, 0, 255), 3)
-
-
-        cv2.imshow("Image", img)
-        cv2.waitKey(1)
-
-
-
-if __name__== "__main__":
-    main()
+            return JsonResponse({"hand_detected": hand_detected})
+        except Exception as e:
+            return JsonResponse({"error": str(e)})
+    return JsonResponse({"message": "Send a POST request."})

@@ -28,16 +28,10 @@
             box-shadow: 0 0 25px #00ffcc88;
         }
 
-        iframe, video {
+        video {
             width: 640px;
             height: 480px;
             display: block;
-        }
-
-        footer {
-            margin-top: 30px;
-            font-size: 0.9em;
-            color: #aaa;
         }
     </style>
 </head>
@@ -46,9 +40,49 @@
     <h1>🖐️ Real-time Hand Tracking</h1>
 
     <div class="video-container">
-        <img src="https://handtracker.onrender.com/video_feed/" alt="Hand Tracking Stream">
-
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas" style="display:none;"></canvas>
     </div>
+
+    <script>
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                document.getElementById("video").srcObject = stream;
+                processFrames();
+            } catch (error) {
+                console.error("Error accessing webcam:", error);
+                alert("Could not access webcam. Please allow camera permissions.");
+            }
+        }
+
+        function processFrames() {
+            const video = document.getElementById("video");
+            const canvas = document.getElementById("canvas");
+            const ctx = canvas.getContext("2d");
+
+            function captureFrame() {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                const frame = canvas.toDataURL("image/jpeg"); // Convert to base64
+                sendFrameToBackend(frame);
+            }
+
+            setInterval(captureFrame, 100); // Send frame every 100ms
+        }
+
+        async function sendFrameToBackend(frame) {
+            await fetch("https://hand-tracker-f0t2.onrender.com/process_frame/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ image: frame }),
+            });
+        }
+
+        window.onload = startCamera;
+    </script>
 
     <footer>
         Created by Vipul Sharma | Computer Vision Project
