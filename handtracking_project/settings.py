@@ -26,7 +26,8 @@ SECRET_KEY = "django-insecure-!6+8xopa(7!+*5t)_fni)lp)yw16*ze9(q9ctg4sor@f^+vr2a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['hand-tracker-f0t2.onrender.com', 'localhost', '127.0.0.1']
+
 
 
 # Application definition
